@@ -1,27 +1,39 @@
 from pathvalidate import sanitize_filename
-from tqdm import tqdm
 from pyspark.sql import SparkSession
+import os
+from tqdm import tqdm
 
-
+# Start Spark session
 spark = SparkSession.builder \
     .appName('data preparation') \
     .master("local") \
     .config("spark.sql.parquet.enableVectorizedReader", "true") \
     .getOrCreate()
 
-
+# Read parquet from HDFS
 df = spark.read.parquet("/a.parquet")
+
+# Sample and filter
 n = 1000
-df = df.select(['id', 'title', 'text']).sample(fraction=100 * n / df.count(), seed=0).limit(n)
+df = df.select(['id', 'title', 'text']) \
+       .filter("text IS NOT NULL") \
+       .sample(fraction=100 * n / df.count(), seed=0) \
+       .limit(n)
 
+# Save .txt files to local /app/data folder
+os.makedirs("data", exist_ok=True)
 
-def create_doc(row):
-    filename = "data/" + sanitize_filename(str(row['id']) + "_" + row['title']).replace(" ", "_") + ".txt"
-    with open(filename, "w") as f:
-        f.write(row['text'])
+def save_text(row):
+    if row['text']:
+        filename = f"data/{sanitize_filename(str(row['id']) + '_' + row['title']).replace(' ', '_')}.txt"
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(row['text'])
 
+df = df.repartition(50)
+df.foreach(save_text)
 
-df.foreach(create_doc)
+# Create RDD: <id>\t<title>\t<text>
+rdd = df.rdd.map(lambda row: f"{row['id']}\t{row['title']}\t{row['text']}")
 
-
-# df.write.csv("/index/data", sep = "\t")
+# Save to HDFS at /index/data
+rdd.saveAsTextFile("/index/data")

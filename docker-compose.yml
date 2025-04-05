@@ -19,6 +19,9 @@ services:
     tty: true
     working_dir: /app
     # You can comment the entrypoint to run the script manually inside the container
+    environment:
+      - SPARK_DRIVER_MEMORY=4g
+      - SPARK_EXECUTOR_MEMORY=4g
     entrypoint: 
       - bash
       - /app/app.sh
@@ -43,7 +46,7 @@ services:
     image: cassandra
     container_name: cassandra-server
     ports:
-      - "7000:7000"
+      - "7001:7000"
     networks:
       - spark-cluster
     
