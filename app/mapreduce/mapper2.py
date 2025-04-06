@@ -12,7 +12,6 @@ for line in sys.stdin:
             continue
         doc_id, title, text = parts[0], parts[1], parts[2]
         words = tokenize(text)
-        for word in words:
-            print(f"{word}\t{doc_id}\t1")
-    except Exception as e:
+        print(f"{doc_id}\t{len(words)}")
+    except:
         continue
