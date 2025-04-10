@@ -14,7 +14,7 @@ spark = SparkSession.builder \
 df = spark.read.parquet("/a.parquet")
 
 # Sample and filter
-n = 1000
+n = 10
 df = df.select(['id', 'title', 'text']) \
        .filter("text IS NOT NULL") \
        .sample(fraction=100 * n / df.count(), seed=0) \
@@ -29,7 +29,7 @@ def save_text(row):
         with open(filename, "w", encoding="utf-8") as f:
             f.write(row['text'])
 
-df = df.repartition(50)
+df = df.repartition(5)
 df.foreach(save_text)
 
 # Create RDD: <id>\t<title>\t<text>
