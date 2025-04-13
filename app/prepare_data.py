@@ -14,7 +14,7 @@ spark = SparkSession.builder \
 df = spark.read.parquet("/a.parquet")
 
 # Sample and filter
-n = 10
+n = 1000
 df = df.select(['id', 'title', 'text']) \
        .filter("text IS NOT NULL") \
        .sample(fraction=100 * n / df.count(), seed=0) \
